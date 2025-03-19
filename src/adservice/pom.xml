@@ -78,6 +78,8 @@
                     <protocVersion>${protobuf.version}</protocVersion>
                     <pluginId>grpc-java</pluginId>
                     <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}</pluginArtifact>
+                    <!-- Specify the path to protoc executable -->
+                    <protocExecutable>/path/to/protoc</protocExecutable>
                 </configuration>
                 <executions>
                     <execution>
