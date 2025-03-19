@@ -1,22 +1,33 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
+    <!-- Parent POM for inheritance -->
+    <parent>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-parent</artifactId>
+        <version>33</version>
+        <relativePath/>
+    </parent>
 
     <groupId>com.assy.www</groupId>
     <artifactId>adservice</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <name>AdService</name>
+    <description>Ad Service for the Hipster Shop microservice</description>
+
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <java.version>11</java.version>
         <grpc.version>1.55.1</grpc.version>
         <protobuf.version>3.21.7</protobuf.version>
     </properties>
 
     <dependencies>
-        <!-- gRPC dependencies -->
+        <!-- gRPC Dependencies -->
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
@@ -33,54 +44,74 @@
             <version>${grpc.version}</version>
         </dependency>
 
-        <!-- Protobuf dependencies -->
+        <!-- Protobuf Dependencies -->
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${protobuf.version}</version>
         </dependency>
 
-        <!-- Logging -->
+        <!-- Log4j for logging -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>2.17.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.17.1</version>
+        </dependency>
 
-        <!-- Test dependencies -->
+        <!-- Guava Dependency -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>31.0.1-jre</version>
+        </dependency>
+
+        <!-- Test Dependencies -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Dependency for building gRPC stubs from proto -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>protoc-gen-grpc-java</artifactId>
+            <version>${grpc.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+
         <plugins>
-            <!-- Compiler Plugin -->
+            <!-- Compiler Plugin for Java 11 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
 
-            <!-- Protobuf Plugin -->
+            <!-- Protobuf Maven Plugin to generate Java code from .proto files -->
             <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
+                <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-                <version>0.6.1</version>
-                <configuration>
-                    <protocVersion>${protobuf.version}</protocVersion>
-                    <pluginId>grpc-java</pluginId>
-                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}</pluginArtifact>
-                    <!-- Specify the path to protoc executable -->
-                    <protocExecutable>/usr/local/protoc</protocExecutable>
-                </configuration>
+                <version>0.8.18</version>
                 <executions>
                     <execution>
                         <goals>
@@ -89,7 +120,64 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <protoSourceRoot>src/main/proto</protoSourceRoot>
+                    <outputDirectory>target/generated-sources/protobuf/java</outputDirectory>
+                </configuration>
+            </plugin>
+
+            <!-- gRPC Maven Plugin -->
+            <plugin>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-maven-plugin</artifactId>
+                <version>${grpc.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Profile for building the project with Grpc/Protobuf -->
+        <profile>
+            <id>grpc</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-maven-plugin</artifactId>
+                        <version>0.8.18</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>compile</goal>
+                                    <goal>generate-sources</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <repositories>
+        <!-- Repository for gRPC and Protobuf dependencies -->
+        <repository>
+            <id>grpc</id>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>protobuf-maven-plugin</id>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </pluginRepository>
+    </pluginRepositories>
 </project>
